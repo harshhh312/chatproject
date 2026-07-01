@@ -19,7 +19,7 @@ const Search = () =>{
                 // doc.data() is never undefined for query doc snapshots
                 setUser(doc.data());
             });
-        }catch(err){
+        }catch {
             setErr(true);
         }
     };
@@ -51,7 +51,7 @@ const Search = () =>{
                     [combinedId+".date"]:serverTimestamp()
                 });
             }
-        }catch(err){
+        }catch {
             setErr(true);
         };
         setUser(null);

@@ -1,80 +1,69 @@
 import React, { useContext, useState } from "react";
-import gal from "../icons/gallery.png"
-import send from "../icons/send.png"
 import { ChatContext } from "../context/ChatContext";
 import { AuthContext } from "../context/AuthContext";
 import { Timestamp, arrayUnion, doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { v4 as uuid} from "uuid";
-import { db, storage } from "../firebase";
-import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
+import { db } from "../firebase";
 const Input = () =>{
     const { currentUser } = useContext(AuthContext);
     const { data } = useContext(ChatContext);
     const [text, setText] = useState("");
     const [img, setImg] = useState(null);
     
-    const handleSend = async() =>{
-        if(img){
-            const storageRef = ref(storage, uuid());
-            const uploadTask = uploadBytesResumable(storageRef, img);
-            uploadTask.on('state_changed', 
-  (snapshot) => {
+    const handleSend = async () => {
+        if (img) {
+            const formData = new FormData();
+            formData.append("file", img);
+            formData.append("upload_preset", import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
 
-    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-    console.log('Upload is ' + progress + '% done');
-    switch (snapshot.state) {
-      case 'paused':
-        console.log('Upload is paused');
-        break;
-      case 'running':
-        console.log('Upload is running');
-        break;
-    }
-  }, 
-  (error) => {
-   // setErr(true);
-  }, 
-  () => {
-    getDownloadURL(uploadTask.snapshot.ref).then( async(downloadURL) => {
-        await updateDoc(doc(db, "chats",data.chatId),{
-            messages: arrayUnion({
-                id: uuid(),
-                text,
-                senderId: currentUser.uid,
-                date: Timestamp.now(),
-                img:downloadURL,
-            }),
-        })
-    });
-  }
-);
+            try {
+                const response = await fetch(`https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`, {
+                    method: "POST",
+                    body: formData,
+                });
+                const dataResponse = await response.json();
+                const downloadURL = dataResponse.secure_url;
 
-        }else{
-            await updateDoc(doc(db, "chats",data.chatId),{
+                await updateDoc(doc(db, "chats", data.chatId), {
+                    messages: arrayUnion({
+                        id: uuid(),
+                        text,
+                        senderId: currentUser.uid,
+                        date: Timestamp.now(),
+                        img: downloadURL,
+                    }),
+                });
+            } catch (err) {
+                console.log(err);
+            }
+        } else {
+            await updateDoc(doc(db, "chats", data.chatId), {
                 messages: arrayUnion({
                     id: uuid(),
                     text,
                     senderId: currentUser.uid,
                     date: Timestamp.now(),
                 }),
-            })
-            await updateDoc(doc(db, "userChats", currentUser.uid), {
-                [`${data.chatId}.lastMessage`]: {
-                    text
-                },
-                [`${data.chatId}.date`]: serverTimestamp()
             });
-            await updateDoc(doc(db, "userChats", data.user.uid), {
-                [`${data.chatId}.lastMessage`]: {
-                    text
-                },
-                [`${data.chatId}.date`]: serverTimestamp()
-            });
-            setText("");
-            setImg(null);
-
         }
-}
+
+        await updateDoc(doc(db, "userChats", currentUser.uid), {
+            [`${data.chatId}.lastMessage`]: {
+                text: img ? "Shared a photo" : text
+            },
+            [`${data.chatId}.date`]: serverTimestamp()
+        });
+        await updateDoc(doc(db, "userChats", data.user.uid), {
+            [`${data.chatId}.lastMessage`]: {
+                text: img ? "Shared a photo" : text
+            },
+            [`${data.chatId}.date`]: serverTimestamp()
+        });
+
+        setText("");
+        setImg(null);
+    };
+
     return (
         <div className="input">
             <div className="typeinput">
