@@ -3,13 +3,13 @@ import { initializeApp } from "firebase/app";
 import {getAuth} from "firebase/auth";
 import {getFirestore} from "firebase/firestore"
 const firebaseConfig = {
-  apiKey: "",
-  authDomain: "",
-  projectId: "",
-  storageBucket: "",
-  messagingSenderId: "",
-  appId: "",
-  measurementId: ""
+  apiKey: "AIzaSyB2rymdt70BxIO8mC4QDgoJp4P_MIZk994",
+  authDomain: "chatbox-33624.firebaseapp.com",
+  projectId: "chatbox-33624",
+  storageBucket: "chatbox-33624.appspot.com",
+  messagingSenderId: "278878816724",
+  appId: "1:278878816724:web:9f6d8a3ba860e8b500ae41",
+  measurementId: "G-Z5NJX8S7GF"
 };
 
 // Initialize Firebase
